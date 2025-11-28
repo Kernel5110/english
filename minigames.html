@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scribe's Challenge - Minigames</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Lato:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .game-container {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2rem;
+            border-radius: 8px;
+            border: 1px solid var(--accent-gold);
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            text-align: center;
+        }
+
+        .game-btn {
+            background: transparent;
+            border: 1px solid var(--accent-gold);
+            color: var(--accent-gold);
+            padding: 0.8rem 1.5rem;
+            font-family: var(--font-heading);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .game-btn:hover {
+            background: var(--accent-gold);
+            color: var(--bg-color);
+        }
+
+        .result-msg {
+            margin-top: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 1.5em;
+        }
+
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        @media (max-width: 600px) {
+            .quiz-options {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .hidden-game {
+            display: none;
+        }
+
+        /* Trilingual Game Styles */
+        .trilingual-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .trilingual-table th,
+        .trilingual-table td {
+            border: 1px solid var(--accent-gold);
+            padding: 1rem;
+            text-align: center;
+            color: var(--text-primary);
+        }
+
+        .trilingual-table th {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--accent-gold);
+            font-family: var(--font-heading);
+        }
+
+        .drop-zone {
+            min-height: 50px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px dashed var(--text-secondary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .drop-zone.drag-over {
+            background: rgba(212, 175, 55, 0.2);
+            border-color: var(--accent-gold);
+        }
+
+        .word-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            min-height: 80px;
+        }
+
+        .draggable-word {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-gold);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            cursor: grab;
+            border-radius: 4px;
+            user-select: none;
+        }
+
+        .draggable-word:active {
+            cursor: grabbing;
+        }
+
+        .draggable-word.correct {
+            background: rgba(0, 255, 0, 0.2);
+            border-color: #00ff00;
+            cursor: default;
+        }
+
+        /* Memory Game Styles */
+        .memory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .memory-card {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-gold);
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            color: transparent;
+            position: relative;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .memory-card.flipped,
+        .memory-card.matched {
+            background: rgba(212, 175, 55, 0.1);
+            color: var(--text-primary);
+            transform: rotateY(180deg);
+        }
+
+        .memory-card.matched {
+            border-color: #00ff00;
+            background: rgba(0, 255, 0, 0.1);
+        }
+
+        .memory-card-content {
+            pointer-events: none;
+            display: block;
+            transform: rotateY(180deg);
+        }
+
+        @media (max-width: 600px) {
+            .memory-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header class="hero" style="height: 50vh;">
+        <div class="hero-content">
+            <h1 class="title">The Scribe's Challenge</h1>
+            <p class="subtitle">Test your knowledge of the Mycenaean World</p>
+            <a href="index.html" class="btn-scroll">Return to History</a>
+        </div>
+        <div class="hero-overlay"></div>
+    </header>
+
+    <main>
+        <section class="section">
+            <div class="container">
+                <h2 class="section-title">Minigame 1: The Scribe's Quiz</h2>
+                <div class="game-container" id="quiz-game">
+                    <div id="quiz-question-container">
+                        <h3 id="question-text" style="color: var(--text-primary); margin-bottom: 1.5rem;">Question goes
+                            here</h3>
+                        <div class="quiz-options" id="answer-buttons">
+                            <!-- Buttons will be generated here -->
+                        </div>
+                    </div>
+                    <div id="quiz-result" class="result-msg"></div>
+                    <button id="next-btn" class="game-btn hidden-game">Next Question</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="section-title">Minigame 2: Decipher the Tablet</h2>
+                <div class="game-container">
+                    <p class="section-text" style="margin-bottom: 1.5rem;">Unscramble the word related to Mycenaean
+                        Greek.</p>
+                    <h3 id="scramble-word"
+                        style="font-size: 2.5rem; letter-spacing: 5px; margin-bottom: 1.5rem; color: var(--accent-gold);">
+                        LINEAR</h3>
+                    <input type="text" id="guess-input" placeholder="Type your answer..."
+                        style="background: rgba(255,255,255,0.1); border: 1px solid var(--text-secondary); padding: 0.8rem; color: white; font-family: var(--font-body); width: 100%; max-width: 300px; margin-bottom: 1rem;">
+                    <br>
+                    <button id="check-scramble" class="game-btn">Decipher</button>
+                    <div id="scramble-result" class="result-msg"></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="section-title">Minigame 3: The Trilingual Tablet</h2>
+                <div class="game-container" style="max-width: 1000px;">
+                    <p class="section-text" style="margin-bottom: 1.5rem;">Drag the words to their correct place in the
+                        tablet.</p>
+
+                    <table class="trilingual-table">
+                        <thead>
+                            <tr>
+                                <th>English</th>
+                                <th>Español</th>
+                                <th>Mycenaean (Linear B)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablet-body">
+                            <!-- Rows generated by JS -->
+                        </tbody>
+                    </table>
+
+                    <div class="word-bank" id="word-bank">
+                        <!-- Draggable words generated by JS -->
+                    </div>
+
+                    <div id="tablet-result" class="result-msg"></div>
+                    <button id="reset-tablet" class="game-btn">Reset Tablet</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <div class="container">
+                <h2 class="section-title">Minigame 4: Memory of the Ancients</h2>
+                <div class="game-container">
+                    <p class="section-text" style="margin-bottom: 1.5rem;">Match the Mycenaean word with its English
+                        meaning.</p>
+                    <div class="memory-grid" id="memory-grid">
+                        <!-- Cards generated by JS -->
+                    </div>
+                    <div id="memory-result" class="result-msg"></div>
+                    <button id="reset-memory" class="game-btn">Reset Memory</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 The Silence of the Scribes. Created for English Presentation.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Quiz Data
+        const questions = [
+            {
+                question: "What script did the Mycenaeans use?",
+                answers: [
+                    { text: "Linear A", correct: false },
+                    { text: "Linear B", correct: true },
+                    { text: "Hieroglyphs", correct: false },
+                    { text: "Cuneiform", correct: false }
+                ]
+            },
+            {
+                question: "What does 'QA-SI-RE-U' mean?",
+                answers: [
+                    { text: "Scribe", correct: false },
+                    { text: "Warrior", correct: false },
+                    { text: "King (Basileus)", correct: true },
+                    { text: "Chariot", correct: false }
+                ]
+            },
+            {
+                question: "Who deciphered Linear B?",
+                answers: [
+                    { text: "Arthur Evans", correct: false },
+                    { text: "Heinrich Schliemann", correct: false },
+                    { text: "Michael Ventris", correct: true },
+                    { text: "Alice Kober", correct: false }
+                ]
+            },
+            {
+                question: "What caused the collapse around 1200 BC?",
+                answers: [
+                    { text: "Only earthquakes", correct: false },
+                    { text: "A 'perfect storm' of factors", correct: true },
+                    { text: "Alien invasion", correct: false },
+                    { text: "Lack of paper", correct: false }
+                ]
+            }
+        ];
+
+        // Quiz Logic
+        const questionText = document.getElementById('question-text');
+        const answerButtonsElement = document.getElementById('answer-buttons');
+        const nextButton = document.getElementById('next-btn');
+        const quizResult = document.getElementById('quiz-result');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            nextButton.innerHTML = "Next Question";
+            showQuestion();
+        }
+
+        function showQuestion() {
+            resetState();
+            let currentQuestion = questions[currentQuestionIndex];
+            let questionNo = currentQuestionIndex + 1;
+            questionText.innerText = questionNo + ". " + currentQuestion.question;
+
+            currentQuestion.answers.forEach(answer => {
+                const button = document.createElement('button');
+                button.innerText = answer.text;
+                button.classList.add('game-btn');
+                if (answer.correct) {
+                    button.dataset.correct = answer.correct;
+                }
+                button.addEventListener('click', selectAnswer);
+                answerButtonsElement.appendChild(button);
+            });
+        }
+
+        function resetState() {
+            nextButton.classList.add('hidden-game');
+            quizResult.innerText = '';
+            while (answerButtonsElement.firstChild) {
+                answerButtonsElement.removeChild(answerButtonsElement.firstChild);
+            }
+        }
+
+        function selectAnswer(e) {
+            const selectedBtn = e.target;
+            const isCorrect = selectedBtn.dataset.correct === "true";
+            if (isCorrect) {
+                selectedBtn.style.background = "rgba(0, 255, 0, 0.2)";
+                selectedBtn.style.borderColor = "#00ff00";
+                quizResult.innerText = "Correct!";
+                quizResult.style.color = "#00ff00";
+                score++;
+            } else {
+                selectedBtn.style.background = "rgba(255, 0, 0, 0.2)";
+                selectedBtn.style.borderColor = "#ff0000";
+                quizResult.innerText = "Incorrect!";
+                quizResult.style.color = "#ff0000";
+            }
+
+            Array.from(answerButtonsElement.children).forEach(button => {
+                if (button.dataset.correct === "true") {
+                    button.style.background = "rgba(0, 255, 0, 0.2)";
+                    button.style.borderColor = "#00ff00";
+                }
+                button.disabled = true;
+            });
+
+            if (questions.length > currentQuestionIndex + 1) {
+                nextButton.classList.remove('hidden-game');
+            } else {
+                nextButton.innerText = "Restart Quiz";
+                nextButton.classList.remove('hidden-game');
+            }
+        }
+
+        nextButton.addEventListener('click', () => {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                showQuestion();
+            } else {
+                startQuiz();
+            }
+        });
+
+        startQuiz();
+
+        // Scramble Game Logic
+        const words = [
+            { word: "SCRIBE", scramble: "BRESIC" },
+            { word: "TABLET", scramble: "BATTLE" },
+            { word: "GREEK", scramble: "KEERG" },
+            { word: "MYCENAE", scramble: "YMENACE" },
+            { word: "LINEAR", scramble: "ALIREN" }
+        ];
+
+        let currentWordIndex = 0;
+        const scrambleWordEl = document.getElementById('scramble-word');
+        const guessInput = document.getElementById('guess-input');
+        const checkBtn = document.getElementById('check-scramble');
+        const scrambleResult = document.getElementById('scramble-result');
+
+        function loadScramble() {
+            scrambleWordEl.innerText = words[currentWordIndex].scramble;
+            guessInput.value = '';
+            scrambleResult.innerText = '';
+        }
+
+        checkBtn.addEventListener('click', () => {
+            const guess = guessInput.value.toUpperCase().trim();
+            if (guess === words[currentWordIndex].word) {
+                scrambleResult.innerText = "Correct! Next word...";
+                scrambleResult.style.color = "#00ff00";
+                setTimeout(() => {
+                    currentWordIndex = (currentWordIndex + 1) % words.length;
+                    loadScramble();
+                }, 1500);
+            } else {
+                scrambleResult.innerText = "Try again!";
+                scrambleResult.style.color = "#ff0000";
+            }
+        });
+
+        loadScramble();
+
+        // Trilingual Tablet Game Logic
+        const tabletData = [
+            { id: 1, en: "King", es: "Rey", my: "QA-SI-RE-U" },
+            { id: 2, en: "Love/Friend", es: "Amor/Amigo", my: "PI-RO" },
+            { id: 3, en: "Gold", es: "Oro", my: "KU-RU-SO" },
+            { id: 4, en: "Sheep", es: "Oveja", my: "O-WI" },
+            { id: 5, en: "Woman", es: "Mujer", my: "GU-NA" }
+        ];
+
+        const tabletBody = document.getElementById('tablet-body');
+        const wordBank = document.getElementById('word-bank');
+        const tabletResult = document.getElementById('tablet-result');
+        const resetTabletBtn = document.getElementById('reset-tablet');
+
+        function initTabletGame() {
+            tabletBody.innerHTML = '';
+            wordBank.innerHTML = '';
+            tabletResult.innerText = '';
+
+            let wordsToBank = [];
+
+            tabletData.forEach(row => {
+                const tr = document.createElement('tr');
+
+                // Randomly decide which column is pre-filled (hint)
+                // 0: English, 1: Spanish, 2: Mycenaean
+                const hintIndex = Math.floor(Math.random() * 3);
+
+                const cols = ['en', 'es', 'my'];
+
+                cols.forEach((lang, index) => {
+                    const td = document.createElement('td');
+                    if (index === hintIndex) {
+                        td.innerText = row[lang];
+                        td.classList.add('filled');
+                    } else {
+                        const dropZone = document.createElement('div');
+                        dropZone.classList.add('drop-zone');
+                        dropZone.dataset.correctWord = row[lang];
+
+                        dropZone.addEventListener('dragover', handleDragOver);
+                        dropZone.addEventListener('dragleave', handleDragLeave);
+                        dropZone.addEventListener('drop', handleDrop);
+
+                        td.appendChild(dropZone);
+
+                        // Add word to bank
+                        wordsToBank.push({ text: row[lang], id: row.id + '-' + lang });
+                    }
+                    tr.appendChild(td);
+                });
+
+                tabletBody.appendChild(tr);
+            });
+
+            // Shuffle words
+            wordsToBank.sort(() => Math.random() - 0.5);
+
+            wordsToBank.forEach(wordObj => {
+                const wordEl = document.createElement('div');
+                wordEl.classList.add('draggable-word');
+                wordEl.draggable = true;
+                wordEl.innerText = wordObj.text;
+                wordEl.id = wordObj.id;
+
+                wordEl.addEventListener('dragstart', handleDragStart);
+                wordEl.addEventListener('dragend', handleDragEnd); // Fix: Add dragend listener
+
+                wordBank.appendChild(wordEl);
+            });
+        }
+
+        let draggedItem = null;
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            e.dataTransfer.setData('text/plain', this.innerText);
+            setTimeout(() => this.style.opacity = '0.5', 0);
+        }
+
+        function handleDragEnd(e) {
+            // Fix: Reset opacity if dropped outside or cancelled
+            this.style.opacity = '1';
+            draggedItem = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            this.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            this.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            this.classList.remove('drag-over');
+
+            if (this.children.length > 0) return; // Already has a word
+
+            const correctWord = this.dataset.correctWord;
+            const droppedText = e.dataTransfer.getData('text/plain');
+
+            if (droppedText === correctWord) {
+                this.appendChild(draggedItem);
+                draggedItem.draggable = false;
+                draggedItem.classList.add('correct');
+                draggedItem.style.cursor = 'default';
+                // Remove dragend listener so it doesn't reset if we do something else later (optional but good practice)
+                draggedItem.removeEventListener('dragend', handleDragEnd);
+                checkWin();
+            } else {
+                tabletResult.innerText = "Incorrect match! Try again.";
+                tabletResult.style.color = "#ff0000";
+                setTimeout(() => tabletResult.innerText = '', 2000);
+            }
+            // Opacity reset is handled by dragend now
+        }
+
+        function checkWin() {
+            const totalDropZones = document.querySelectorAll('.drop-zone').length;
+            const filledZones = document.querySelectorAll('.drop-zone .draggable-word').length;
+
+            if (totalDropZones === filledZones) {
+                tabletResult.innerText = "Congratulations! You have deciphered the tablet!";
+                tabletResult.style.color = "#00ff00";
+            }
+        }
+
+        resetTabletBtn.addEventListener('click', initTabletGame);
+
+        // Memory Game Logic
+        const memoryData = [
+            { pairId: 1, content: "King" }, { pairId: 1, content: "QA-SI-RE-U" },
+            { pairId: 2, content: "Gold" }, { pairId: 2, content: "KU-RU-SO" },
+            { pairId: 3, content: "Woman" }, { pairId: 3, content: "GU-NA" },
+            { pairId: 4, content: "Sheep" }, { pairId: 4, content: "O-WI" },
+            { pairId: 5, content: "Love" }, { pairId: 5, content: "PI-RO" },
+            { pairId: 6, content: "Man" }, { pairId: 6, content: "A-TO-RO-QO" }
+        ];
+
+        const memoryGrid = document.getElementById('memory-grid');
+        const memoryResult = document.getElementById('memory-result');
+        const resetMemoryBtn = document.getElementById('reset-memory');
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let lockBoard = false;
+
+        function initMemoryGame() {
+            memoryGrid.innerHTML = '';
+            memoryResult.innerText = '';
+            flippedCards = [];
+            matchedPairs = 0;
+            lockBoard = false;
+
+            // Shuffle
+            const cards = [...memoryData].sort(() => Math.random() - 0.5);
+
+            cards.forEach(item => {
+                const card = document.createElement('div');
+                card.classList.add('memory-card');
+                card.dataset.pairId = item.pairId;
+
+                const content = document.createElement('span');
+                content.classList.add('memory-card-content');
+                content.innerText = item.content;
+                card.appendChild(content);
+
+                card.addEventListener('click', flipCard);
+                memoryGrid.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === flippedCards[0]) return;
+
+            this.classList.add('flipped');
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            let isMatch = flippedCards[0].dataset.pairId === flippedCards[1].dataset.pairId;
+
+            if (isMatch) {
+                disableCards();
+            } else {
+                unflipCards();
+            }
+        }
+
+        function disableCards() {
+            flippedCards[0].classList.add('matched');
+            flippedCards[1].classList.add('matched');
+            flippedCards = [];
+            matchedPairs++;
+
+            if (matchedPairs === memoryData.length / 2) {
+                memoryResult.innerText = "You found all the pairs!";
+                memoryResult.style.color = "#00ff00";
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                flippedCards[0].classList.remove('flipped');
+                flippedCards[1].classList.remove('flipped');
+                flippedCards = [];
+                lockBoard = false;
+            }, 1000);
+        }
+
+        resetMemoryBtn.addEventListener('click', initMemoryGame);
+
+        // Initialize on load
+        initTabletGame();
+        initMemoryGame();
+
+    </script>
+</body>
+
+</html>
